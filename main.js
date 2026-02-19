@@ -1,15 +1,11 @@
 /*
-
     WELCOME TO DOMLSON CONFIGURATION LANGUAGE
-
-    Features wish to add : Variables, Reference, Nested Objects
-
 */
 
 import fs from "fs/promises";
 import { RULES } from "./rules.js";
 
-class Domlson {
+export default class Domlson {
   async getSource(src) {
     try {
       const data = await fs.readFile(src, {
@@ -21,35 +17,43 @@ class Domlson {
     }
   }
 
-  createTree(tok) {
-    let variableName = tok[1];
-    let variableValue = tok[2];
+  typeCheck(val) {
+    if (!isNaN(val)) {
+      val = Number(val);
+    } else if (val.startsWith('"') && val.endsWith('"')) {
+      val = val.replaceAll('"', "");
+    } else if (val === "true" || val === "false") {
+      val = val === "true";
+    } else {
+      console.error("Unexpected type:", val);
+      return null;
+    }
+    return val;
+  }
 
-    let num = parseInt(variableValue);
-    let string = /"[a-zA-z]+"/;
+  createTree(tok) {
+    let variableName = tok[1].trim();
+    let variableValue = tok[2].trim();
 
     let result = {};
-    // Detect variable type
-    if (!isNaN(num)) {
-      result[variableName] = num;
-      result["type"] = "Number";
-    } else if (string.test(variableValue)) {
-      let variableVal = variableValue.replaceAll('"', "");
-      result[variableName] = variableVal;
-      result["type"] = "String";
-    } else if (variableValue === "true" || variableValue === "false") {
-      result[variableName] = variableValue === "true";
-      result["type"] = "Boolean";
-    } else {
-      console.error("Unexpected type:", variableValue);
-      return 0;
-    }
 
-    /* Don't forget variable types */
+    if (RULES.array.test(variableValue)) {
+      let arrValues = tok[3].split(", ");
+      let final = [];
+      for (let val of arrValues) {
+        let result = this.typeCheck(val);
+        final.push(result);
+      }
+      result[variableName] = final;
+      result["type"] = "array";
+    } else {
+      let resultVal = this.typeCheck(variableValue);
+      result[variableName] = resultVal;
+      result["type"] = typeof resultVal;
+    }
 
     return result;
   }
-
   async main(src) {
     let tok;
     let lines;
@@ -58,28 +62,22 @@ class Domlson {
 
     if (RULES.source.test(src)) {
       content = await this.getSource(src);
-      content =  content.split("\r\n")
+      content = content.split("\r\n");
 
       if (!content) return;
     }
 
-    content != src ? lines = content : content.trim().split("\n") ;
+    content != src ? (lines = content) : (lines = content.trim().split("\n"));
 
     for (let el of lines) {
       if ((tok = RULES.definition.exec(el))) {
         final.push(this.createTree(tok));
+      } else if((tok = RULES.comment.exec(el))) {
+        continue;
       }
     }
-
-    console.log("Final Config:", final);
+    // console.log("Final Config:", final);
+    return final;
   }
 }
 
-const src = `
-    isim : "Dogukan"
-    age : 33
-    student : false   
-`;
-
-const domlson = new Domlson();
-domlson.main("abc.dms");
