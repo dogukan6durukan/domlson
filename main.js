@@ -1,5 +1,20 @@
 /*
-    WELCOME TO DOMLSON CONFIGURATION LANGUAGE
+  WELCOME TO DOMLSON CONFIGURATION LANGUAGE
+
+  [
+    {...},
+    {
+      object_name : "..."
+      name : "...",
+      ...
+    },
+    ...
+  ]
+
+  Bug notes:
+  name : "John Cena",
+  don't understand "," as a bug
+
 */
 
 import fs from "fs/promises";
@@ -45,11 +60,9 @@ export default class Domlson {
         final.push(result);
       }
       result[variableName] = final;
-      result["type"] = "array";
     } else {
       let resultVal = this.typeCheck(variableValue);
       result[variableName] = resultVal;
-      result["type"] = typeof resultVal;
     }
 
     return result;
@@ -57,27 +70,45 @@ export default class Domlson {
   async main(src) {
     let tok;
     let lines;
-    let final = [];
     let content = src;
+    /* Final tokens list */
+    let final = [];
 
-    if (RULES.source.test(src)) {
+    if (RULES.fileSource.test(src)) {
       content = await this.getSource(src);
       content = content.split("\r\n");
-
       if (!content) return;
     }
 
     content != src ? (lines = content) : (lines = content.trim().split("\n"));
 
-    for (let el of lines) {
-      if ((tok = RULES.definition.exec(el))) {
+    let line = 0;
+
+    while (line < lines.length) {
+      if ((tok = RULES.reference.exec(lines[line]))) {
+        let myObject = {};
+        myObject["object_name"] = tok[1];
+        while(lines[line] !== "") {
+          line++;
+          if ((tok = RULES.definition.exec(lines[line]))) {
+            myObject = {...myObject, ...this.createTree(tok)};
+          }
+        } 
+        final.push(myObject);
+      } else if(( tok = RULES.definition.exec(lines[line]) )) {
         final.push(this.createTree(tok));
-      } else if((tok = RULES.comment.exec(el))) {
+      } else if(( tok = RULES.comment.exec(lines[line]) )){
         continue;
+      } else {
+        if(lines[line] === "") {
+          break;
+        }
+        console.error("Undefined token at line:", line + 1, ":", '"'+lines[line]+'"');       
       }
+
+      line++;
     }
-    // console.log("Final Config:", final);
+
     return final;
   }
 }
-

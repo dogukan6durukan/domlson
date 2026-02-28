@@ -1,5 +1,12 @@
+@user
 name : "Dogukan"
 age : 19
 student : true
-# My comment
-results : [85, "fine", true]
+results : [55, "meh", false]
+
+@student 
+name : "John Cena"
+age : 31
+
+hello : "world"
+dfsdf
