@@ -31,4 +31,26 @@ name : "John Cena"
 age : user.age
 student : user.student
 results : [85, "fine", true]
+
+professor : "John Doe"
+```
+And example output:
+```js 
+Parsed data: [
+  {
+    object_name: 'user',
+    name: 'Dogukan',
+    age: 19,
+    student: true,
+    results: [ 55, 'meh', false ]
+  },
+  {
+    object_name: 'student',
+    name: 'John Cena',
+    age: 19,
+    student: true,
+    results: [ 85, 'fine', true ]
+  },
+  { professor: 'John Doe' }
+]
 ```
