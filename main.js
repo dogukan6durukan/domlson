@@ -40,8 +40,8 @@ export default class Domlson {
       /* The part for nested objects */
       for (let el of this.variables) {
         if (el["object_name"] === objectName) {
-          let objectVal = result.reduce((acc, key) => acc[key], el);
-          val = objectVal;
+          let checkedVal = result.reduce((acc, key) => acc[key], el);
+          val = checkedVal;
         } else if (el["object_name"] === val) {
           val = el;
         }
